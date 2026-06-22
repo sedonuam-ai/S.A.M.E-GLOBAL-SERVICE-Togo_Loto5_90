@@ -1,0 +1,43 @@
+name: Build APK et publier la Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Installer Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Installer Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.22.0'
+          channel: 'stable'
+
+      - name: Installer les dépendances
+        run: flutter pub get
+
+      - name: Générer l'icône de l'application
+        run: flutter pub run flutter_launcher_icons
+
+      - name: Compiler l'APK (version release)
+        run: flutter build apk --release
+
+      - name: Publier l'APK comme Release GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Loto Togo - Version ${{ github.run_number }}
+          files: build/app/outputs/flutter-apk/app-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
